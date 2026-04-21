@@ -9,7 +9,7 @@ HEIGHT = 640
 pixels = ti.Vector.field(3, dtype=ti.f32, shape=(WIDTH, HEIGHT))
 
 camera_pos = ti.Vector([0.0, 0.0, 5.0])
-light_pos = ti.Vector([2.0, 3.0, 4.0])
+DEFAULT_LIGHT_POS = (2.0, 3.0, 4.0)
 light_color = ti.Vector([1.0, 1.0, 1.0])
 background_color = ti.Vector([0.02, 0.13, 0.16])
 
@@ -145,9 +145,18 @@ def in_shadow(point, light_dir, light_distance):
 
 
 @ti.func
-def shade(point, normal, base_color, ka: ti.f32, kd: ti.f32, ks: ti.f32, shininess: ti.f32):
+def shade(
+    point,
+    normal,
+    base_color,
+    ka: ti.f32,
+    kd: ti.f32,
+    ks: ti.f32,
+    shininess: ti.f32,
+    light_position,
+):
     n = normal.normalized()
-    to_light = light_pos - point
+    to_light = light_position - point
     light_distance = to_light.norm()
     l = to_light / light_distance
     v = (camera_pos - point).normalized()
@@ -171,7 +180,17 @@ def shade(point, normal, base_color, ka: ti.f32, kd: ti.f32, ks: ti.f32, shinine
 
 
 @ti.kernel
-def render(ka: ti.f32, kd: ti.f32, ks: ti.f32, shininess: ti.f32):
+def render(
+    ka: ti.f32,
+    kd: ti.f32,
+    ks: ti.f32,
+    shininess: ti.f32,
+    light_x: ti.f32,
+    light_y: ti.f32,
+    light_z: ti.f32,
+):
+    light_position = ti.Vector([light_x, light_y, light_z])
+
     for i, j in pixels:
         aspect = ti.cast(WIDTH, ti.f32) / ti.cast(HEIGHT, ti.f32)
         u = (2.0 * (ti.cast(i, ti.f32) + 0.5) / ti.cast(WIDTH, ti.f32) - 1.0) * aspect
@@ -184,7 +203,9 @@ def render(ka: ti.f32, kd: ti.f32, ks: ti.f32, shininess: ti.f32):
         color = background_color
         if hit == 1:
             point = ro + rd * t
-            color = shade(point, normal, base_color, ka, kd, ks, shininess)
+            color = shade(
+                point, normal, base_color, ka, kd, ks, shininess, light_position
+            )
 
         pixels[i, j] = color
 
@@ -194,8 +215,11 @@ def main():
     kd = 0.7
     ks = 0.5
     shininess = 32.0
+    light_x, light_y, light_z = DEFAULT_LIGHT_POS
 
-    window = ti.ui.Window("CG Lab 4 - Optional Blinn-Phong + Hard Shadow", (WIDTH, HEIGHT))
+    window = ti.ui.Window(
+        "CG Lab 4 - Optional Blinn-Phong + Hard Shadow", (WIDTH, HEIGHT)
+    )
     canvas = window.get_canvas()
     gui = window.get_gui()
 
@@ -206,7 +230,12 @@ def main():
             ks = gui.slider_float("Ks", ks, 0.0, 1.0)
             shininess = gui.slider_float("Shininess", shininess, 1.0, 128.0)
 
-        render(ka, kd, ks, shininess)
+        with gui.sub_window("Light Position", 0.02, 0.30, 0.28, 0.22):
+            light_x = gui.slider_float("X", light_x, -5.0, 5.0)
+            light_y = gui.slider_float("Y", light_y, -5.0, 6.0)
+            light_z = gui.slider_float("Z", light_z, -2.0, 8.0)
+
+        render(ka, kd, ks, shininess, light_x, light_y, light_z)
         canvas.set_image(pixels)
         window.show()
 
