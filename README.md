@@ -220,7 +220,7 @@ color = I_ambient
 ### 1. 必做部分运行效果
 
 
-<!-- 示例：![必做部分 Phong 光照交互效果](assets/required_phong.gif) -->
+![必做部分 Phong 光照交互效果](assets/required_phong.gif)
 
 调节 `Ka` 时，整个物体的基础亮度会同步变化。`Ka` 较小时，背光区域接近黑色；`Ka` 增大后，阴影和背光面仍能保持可见。
 
@@ -233,7 +233,7 @@ color = I_ambient
 ### 2. 选做部分运行效果
 
 
-<!-- 示例：![选做部分 Blinn-Phong 与硬阴影效果](assets/optional_shadow.gif) -->
+![选做部分 Blinn-Phong 与硬阴影效果](assets/optional_shadow.gif)
 
 运行 `optional.py` 开启硬阴影后，被其他物体遮挡光源的区域只计算环境光，因此能够看到明确的阴影边界。这说明额外的暗影射线可以有效判断光源可见性。
 
